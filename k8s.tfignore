@@ -1,0 +1,85 @@
+### SQL service 
+
+resource "kubernetes_service" "mysql-svc" {
+  metadata {
+    name = "mysql-svc"
+  }
+  spec {
+    selector = {
+      App = "${kubernetes_deployment.mysql.metadata[0].labels.App}"
+    }
+    port {
+      port        = 3306
+      target_port = 3306
+    }
+    cluster_ip = "None"
+  }
+}
+
+
+resource "kubernetes_service" "web-svc" {
+  metadata {
+    name = "web-svc"
+  }
+  spec {
+    selector = {
+      App = "${kubernetes_deployment.mysql.metadata[0].labels.App}"
+    }
+    port {
+      port        = 80
+      target_port = 80
+    }
+    type = "LoadBalancer"
+  }
+}
+
+
+
+
+resource "kubernetes_deployment" "mysql" {
+  metadata {
+    name = "terraform-example"
+    labels = {
+      App = "mysql"
+   
+    }
+  }
+
+  spec {
+    replicas = 1
+
+    selector {
+      match_labels = {
+        app = "mysql"
+      }
+    }
+
+    template {
+      metadata {
+        labels = {
+          app = "mysql"
+        }
+      }
+
+      spec {
+        container {
+          image = "kubetest20200717125140.azurecr.io/kubetest/mysql:5.6"
+          name  = "mysql"
+
+          resources {
+            limits {
+              cpu    = "0.5"
+              memory = "512Mi"
+            }
+            requests {
+              cpu    = "250m"
+              memory = "50Mi"
+            }
+          }
+
+          
+        }
+      }
+    }
+  }
+}

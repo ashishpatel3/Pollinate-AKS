@@ -1,0 +1,57 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: web-svc
+  labels:
+    app: web
+spec:
+  type: LoadBalancer
+  ports:
+    - port: 80
+  selector:
+    app: web
+    tier: web
+  
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: web-pv-claim
+  labels:
+    app: web
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 10Gi
+---
+apiVersion: apps/v1 
+kind: Deployment
+metadata:
+  name: web
+  labels:
+    app: web
+spec:
+  selector:
+    matchLabels:
+      app: web
+      tier: web
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      labels:
+        app: web 
+        tier: web
+    spec:
+      containers:
+      - image: "myacrash.azurecr.io/kube/asp:v1"
+        name: web    
+        volumeMounts:
+        - name: web-persistent-storage
+          mountPath: /var/lib/web
+      volumes:
+      - name: web-persistent-storage
+        persistentVolumeClaim:
+          claimName: web-pv-claim
